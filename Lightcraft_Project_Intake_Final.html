@@ -176,7 +176,7 @@ async function at(method,path,body){
   var opts={method:method,headers:{"Authorization":"Bearer "+TOK,"Content-Type":"application/json"}};
   if(body)opts.body=JSON.stringify(body);
   var res=await fetch("https://api.airtable.com/v0/"+BASE+"/"+path,opts);
-  if(!res.ok)throw new Error("API error "+res.status);
+  if(!res.ok){var err=await res.json();throw new Error("API "+res.status+": "+JSON.stringify(err));}
   return res.json();
 }
 
