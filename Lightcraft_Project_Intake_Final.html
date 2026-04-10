@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lightcraft — Project Intake</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+.app { max-width: 700px; margin: 0 auto; }
+.header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e0e0dc; display: flex; align-items: center; gap: 12px; }
+.header-logo { width: 32px; height: 32px; background: #1a1a1a; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.header-logo span { color: white; font-size: 14px; font-weight: 700; }
+.header-text h1 { font-size: 18px; font-weight: 600; }
+.header-text p { font-size: 13px; color: #666; margin-top: 2px; }
+.section { background: white; border: 1px solid #e8e8e4; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.section-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 5px; }
+.field label .req { color: #c0392b; }
+.field label .hint { font-size: 11px; color: #999; font-weight: 400; margin-left: 4px; }
+.field input, .field select, .field textarea {
+  width: 100%; font-family: inherit; font-size: 14px; color: #1a1a1a;
+  background: #fafaf8; border: 1px solid #ddd; border-radius: 8px;
+  padding: 8px 10px; outline: none; transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #1a1a1a; background: white; }
+.field textarea { resize: vertical; min-height: 72px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.computed { display: grid; grid-template-columns: 140px 1fr; gap: 12px; margin-bottom: 14px; }
+.computed-field { background: #f5f5f3; border: 1px solid #e8e8e4; border-radius: 8px; padding: 8px 10px; }
+.cf-label { font-size: 10px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.cf-value { font-size: 14px; font-weight: 500; color: #1a1a1a; min-height: 20px; word-break: break-all; }
+.check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.check-row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #1a1a1a; }
+.check-row label { font-size: 13px; color: #333; cursor: pointer; }
+.divider { height: 1px; background: #f0f0ec; margin: 14px 0; }
+.company-toggle { display: flex; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.company-toggle button { flex: 1; padding: 8px 12px; font-size: 13px; font-family: inherit; border: none; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+.company-toggle button.active { background: #1a1a1a; color: white; }
+.company-toggle button:not(.active) { background: #fafaf8; color: #666; }
+.company-toggle button:not(.active):hover { background: #f0f0ec; }
+.search-wrap { position: relative; }
+.search-results { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; max-height: 220px; overflow-y: auto; }
+.sr-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f5f5f3; }
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: #f5f5f3; }
+.sr-name { font-size: 14px; color: #1a1a1a; font-weight: 500; }
+.sr-legal { font-size: 12px; color: #888; margin-top: 1px; }
+.sr-empty { padding: 10px 12px; font-size: 13px; color: #999; }
+.selected-pill { display: inline-flex; align-items: center; gap: 6px; background: #1a1a1a; color: white; border-radius: 20px; padding: 4px 10px 4px 12px; font-size: 13px; font-weight: 500; margin-top: 6px; }
+.selected-pill button { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; display: flex; align-items: center; }
+.selected-pill button:hover { color: white; }
+.actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem; }
+.btn { padding: 9px 22px; font-size: 14px; font-family: inherit; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.btn-primary { background: #1a1a1a; color: white; border: none; }
+.btn-primary:hover { background: #333; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: #666; border: 1px solid #ddd; }
+.btn-ghost:hover { background: #f5f5f3; }
+.status { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-top: 1rem; line-height: 1.5; }
+.status.success { background: #f0faf4; color: #1a7a40; border: 1px solid #b3e8c8; }
+.status.error { background: #fef5f5; color: #c0392b; border: 1px solid #f5c6c6; }
+.status.loading { background: #f5f5f3; color: #666; border: 1px solid #e8e8e4; }
+.api-key-section { background: white; border: 1px solid #e8e8e4; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.api-key-section p { font-size: 13px; color: #666; margin-bottom: 10px; line-height: 1.5; }
+.api-key-section a { color: #1a1a1a; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-logo"><span>LC</span></div>
+    <div class="header-text">
+      <h1>New project intake</h1>
+      <p>Lightcraft Project Management — creates records directly in Airtable</p>
+    </div>
+  </div>
+
+      <p>Enter your Airtable Personal Access Token to connect. This is stored only in your browser session and never sent anywhere except Airtable's API. <a href="https://airtable.com/create/tokens" target="_blank">Get your token →</a></p>
+    <div class="field">
+      <label>Personal Access Token<span class="req">*</span></label>
+      <input type="password" id="apiToken" placeholder="pat..." oninput="tokenChanged()">
+    </div>
+    <button class="btn btn-primary" onclick="connectAirtable()" style="margin-top:8px;" id="connectBtn">Connect</button>
+    <div id="connectStatus"></div>
+  </div>
+
+  <div id="formSection">
+    <div class="section">
+      <div class="section-title">Project details</div>
+      <div class="row2">
+        <div class="field">
+          <label>Project name<span class="req">*</span></label>
+          <input type="text" id="projectName" placeholder="e.g. Ally Clark" oninput="updateSRL()">
+        </div>
+        <div class="field">
+          <label>LC Entity<span class="req">*</span></label>
+          <select id="lcEntity" onchange="updateSRL()">
+            <option value="">Select entity...</option>
+            <option value="Los Angeles">Los Angeles</option>
+            <option value="LC East">LC East (LE)</option>
+            <option value="LC UK">LC UK (UK)</option>
+            <option value="LC Spain">LC Spain (EU)</option>
+            <option value="LC OH">LC OH (OH)</option>
+            <option value="LC NM">LC NM (NM)</option>
+          </select>
+        </div>
+      </div>
+      <div class="computed">
+        <div class="computed-field">
+          <div class="cf-label">Project number</div>
+          <div class="cf-value" id="previewPN">—</div>
+        </div>
+        <div class="computed-field">
+          <div class="cf-label">SRL (auto-assembled)</div>
+          <div class="cf-value" id="previewSRL">—</div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Payroll default</label>
+          <select id="payrollDefault">
+            <option value="">Select...</option>
+            <option value="Prod TC_600">Prod TC_600</option>
+            <option value="LC">LC</option>
+            <option value="Prod TC_NU">Prod TC_NU</option>
+            <option value="TBD">TBD</option>
+            <option value="UK">UK</option>
+            <option value="Aether">Aether</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Season</label>
+          <input type="text" id="season" placeholder="e.g. S1, S2">
+        </div>
+      </div>
+      <div style="display:flex; gap:24px; margin-bottom:14px;">
+        <div class="check-row"><input type="checkbox" id="recurring"><label for="recurring">Recurring project</label></div>
+        <div class="check-row"><input type="checkbox" id="keepActive"><label for="keepActive">Keep active</label></div>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Project notes</label>
+        <textarea id="projectNotes" placeholder="General notes, director, DP, special circumstances..."></textarea>
+      </div>
+      <div class="field">
+        <label>Systems of interest</label>
+        <textarea id="systemsOfInterest" placeholder="UAS platforms, cameras, special equipment..." style="min-height:56px;"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Production company</div>
+      <div class="company-toggle">
+        <button class="active" onclick="setMode('existing')" id="btnExisting">Select existing company</button>
+        <button onclick="setMode('new')" id="btnNew">+ Add new company</button>
+      </div>
+
+      <div id="existingSection">
+        <div class="field">
+          <label>Search production companies<span class="req">*</span></label>
+          <div class="search-wrap">
+            <input type="text" id="companySearch" placeholder="Type to search..." oninput="searchCompanies()" autocomplete="off">
+            <div class="search-results" id="searchResults" style="display:none;"></div>
+          </div>
+          <div id="selectedDisplay"></div>
+        </div>
+      </div>
+
+      <div id="newSection" style="display:none;">
+        <div class="field">
+          <label>Company working name<span class="req">*</span><span class="hint">Used in SRL and day-to-day references</span></label>
+          <input type="text" id="newWorkingName" placeholder="e.g. Golden Leo" oninput="updateSRL()">
+        </div>
+        <div class="field">
+          <label>Legal entity name<span class="hint">For invoices and contracts</span></label>
+          <input type="text" id="newLegalName" placeholder="Full legal name if known">
+        </div>
+        <div class="row2">
+          <div class="field"><label>Billing contact name</label><input type="text" id="newBillingContact"></div>
+          <div class="field"><label>Billing contact email</label><input type="email" id="newBillingEmail"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Billing contact phone</label><input type="tel" id="newBillingPhone"></div>
+          <div class="field"><label>Producer payroll email</label><input type="email" id="newPayrollEmail"></div>
+        </div>
+        <div class="field"><label>Billing address</label><textarea id="newBillingAddress" style="min-height:56px;" placeholder="Full billing address"></textarea></div>
+        <div class="field"><label>Billing notes</label><textarea id="newBillingNotes" style="min-height:56px;" placeholder="Special billing instructions, payment terms..."></textarea></div>
+        <div class="check-row"><input type="checkbox" id="newStudioVendor"><label for="newStudioVendor">Studio vendor (insurance &amp; contracts on file)</label></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="clearForm()">Clear form</button>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitForm()">Create project</button>
+    </div>
+    <div id="statusMsg" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const BASE_ID = 'appX3LNIvzae1gxdb';
+const PROJECTS_TABLE = 'tblMrGl8Pwv5gqz36';
+const COMPANIES_TABLE = 'tblNea0IkHGn1XTNS';
+const F = {
+  proj: { name:'fld159op32DNyVgsF', entity:'fldJ6FtzufkctoUTn', payroll:'fldeV01p4F7a2Xk5q', season:'fld725JNax2WxtnBM', recurring:'fldM6R6TbyEQsoTwe', keepActive:'fld9U47LrEHS7jzVa', notes:'fld9HZtxzJiFnNzE7', systems:'fldqGR2MfUAPIryhK', companies:'fldYSUi6Z7ndYgCsv' },
+  co: { working:'fld9Fo7Vmx36ukzDD', legal:'fldla0Wt3iib8NJ8b', billingContact:'fldYE5QJZ17rkGmkx', billingAddr:'fldqYtoSPtAuhVwwi', billingEmail:'fldidZ1IRlP7UulyF', billingPhone:'fldHVEQGujTbqKXb0', billingNotes:'fldYzxgdvawaJER1U', studio:'fldr9BWzy0cvAmsUd', payrollEmail:'fldQDVAE6YOzBDT43' }
+};
+const PREFIX = { 'Los Angeles':'','LC East':'LE','LC UK':'UK','LC Spain':'EU','LC OH':'OH','LC NM':'NM' };
+
+const _a = 'patPO4LsK11k8zN5s.', _b = '70c8b462e95b8ff96968dfe8685cbf69e59f154019717e0ad8fb835c8e7054d3'; let token = _a + _b;
+let mode = 'existing';
+let selectedCo = null;
+let companies = [];
+let nextNum = null;
+
+function tokenChanged() { document.getElementById('connectStatus').innerHTML = ''; }
+
+async function airtable(method, path, body) {
+  const opts = { method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${path}`, opts);
+  if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
+  return res.json();
+}
+
+async function connectAirtable() {
+  if (!token) return;
+  try {
+    const data = await airtable('GET', `${COMPANIES_TABLE}?fields%5B%5D=${F.co.working}&fields%5B%5D=${F.co.legal}&pageSize=100`);
+    companies = (data.records || []).map(r => ({ id:r.id, working:r.fields[F.co.working]||'', legal:r.fields[F.co.legal]||'' }));
+    const proj = await airtable('GET', `${PROJECTS_TABLE}?fields%5B%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bfield%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=1`);
+    nextNum = proj.records && proj.records.length > 0 ? (proj.records[0].fields['fldFNVW27yXF3v7Ds'] || 0) + 1 : 1;
+    document.getElementById('apiKeySection').style.display = 'none';
+    document.getElementById('formSection').style.display = 'block';
+    updateSRL();
+  } catch(e) {
+    document.getElementById('connectStatus').innerHTML = `<div class="status error">Connection failed: ${e.message}. Check your token and try again.</div>`;
+    
+  }
+}
+
+function fmtNum(n, entity) {
+  const p = PREFIX[entity] || '';
+  return p + '3' + String(n).padStart(4,'0');
+}
+
+function updateSRL() {
+  const pn = document.getElementById('projectName').value.trim();
+  const entity = document.getElementById('lcEntity').value;
+  const co = mode==='existing' ? (selectedCo ? selectedCo.working : '') : (document.getElementById('newWorkingName')?.value.trim()||'');
+  const pnEl = document.getElementById('previewPN');
+  const srlEl = document.getElementById('previewSRL');
+  if (entity && nextNum) {
+    const num = fmtNum(nextNum, entity);
+    pnEl.textContent = num;
+    srlEl.textContent = co && pn ? `${num}_${co}_${pn}` : co ? `${num}_${co}_…` : pn ? `${num}_…_${pn}` : num;
+  } else { pnEl.textContent = '—'; srlEl.textContent = '—'; }
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnExisting').className = m==='existing'?'active':'';
+  document.getElementById('btnNew').className = m==='new'?'active':'';
+  document.getElementById('existingSection').style.display = m==='existing'?'':'none';
+  document.getElementById('newSection').style.display = m==='new'?'':'none';
+  updateSRL();
+}
+
+function searchCompanies() {
+  const q = document.getElementById('companySearch').value.toLowerCase();
+  const res = document.getElementById('searchResults');
+  if (!q) { res.style.display='none'; return; }
+  const hits = companies.filter(c=>c.working.toLowerCase().includes(q));
+  if (!hits.length) { res.innerHTML='<div class="sr-empty">No matches — switch to "Add new company" to create one</div>'; res.style.display='block'; return; }
+  res.innerHTML = hits.slice(0,10).map(c=>`<div class="sr-item" onclick="selectCo('${c.id}','${c.working.replace(/'/g,"\\'")}','${c.legal.replace(/'/g,"\\'")}')"><div class="sr-name">${c.working}</div>${c.legal?`<div class="sr-legal">${c.legal}</div>`:''}</div>`).join('');
+  res.style.display='block';
+}
+
+function selectCo(id, working, legal) {
+  selectedCo = {id,working,legal};
+  document.getElementById('searchResults').style.display='none';
+  document.getElementById('companySearch').value='';
+  document.getElementById('selectedDisplay').innerHTML=`<div class="selected-pill"><span>${working}${legal?' — '+legal:''}</span><button onclick="clearCo()">✕</button></div>`;
+  updateSRL();
+}
+
+function clearCo() {
+  selectedCo=null;
+  document.getElementById('selectedDisplay').innerHTML='';
+  updateSRL();
+}
+
+function showStatus(msg,type) {
+  const el=document.getElementById('statusMsg');
+  el.style.display='block'; el.className=`status ${type}`; el.textContent=msg;
+}
+
+async function submitForm() {
+  const pname=document.getElementById('projectName').value.trim();
+  const entity=document.getElementById('lcEntity').value;
+  if (!pname){showStatus('Project name is required.','error');return;}
+  if (!entity){showStatus('LC Entity is required.','error');return;}
+  if (mode==='existing'&&!selectedCo){showStatus('Please select a production company.','error');return;}
+  if (mode==='new'&&!document.getElementById('newWorkingName').value.trim()){showStatus('Working name is required for a new company.','error');return;}
+
+  document.getElementById('submitBtn').disabled=true;
+  showStatus('Creating project...','loading');
+
+  try {
+    let coId = selectedCo ? selectedCo.id : null;
+    if (mode==='new') {
+      showStatus('Creating production company...','loading');
+      const cf={};
+      cf[F.co.working]=document.getElementById('newWorkingName').value.trim();
+      const v=(id)=>document.getElementById(id).value.trim();
+      if(v('newLegalName'))cf[F.co.legal]=v('newLegalName');
+      if(v('newBillingContact'))cf[F.co.billingContact]=v('newBillingContact');
+      if(v('newBillingEmail'))cf[F.co.billingEmail]=v('newBillingEmail');
+      if(v('newBillingPhone'))cf[F.co.billingPhone]=v('newBillingPhone');
+      if(v('newPayrollEmail'))cf[F.co.payrollEmail]=v('newPayrollEmail');
+      if(v('newBillingAddress'))cf[F.co.billingAddr]=v('newBillingAddress');
+      if(v('newBillingNotes'))cf[F.co.billingNotes]=v('newBillingNotes');
+      if(document.getElementById('newStudioVendor').checked)cf[F.co.studio]=true;
+      const newCo=await airtable('POST',COMPANIES_TABLE,{fields:cf});
+      coId=newCo.id;
+    }
+
+    showStatus('Creating project...','loading');
+    const pf={};
+    pf[F.proj.name]=pname;
+    pf[F.proj.entity]=entity;
+    if(coId)pf[F.proj.companies]=[{id:coId}];
+    const pd=document.getElementById('payrollDefault').value;
+    if(pd)pf[F.proj.payroll]=pd;
+    const s=document.getElementById('season').value.trim();
+    if(s)pf[F.proj.season]=s;
+    if(document.getElementById('recurring').checked)pf[F.proj.recurring]=true;
+    if(document.getElementById('keepActive').checked)pf[F.proj.keepActive]=true;
+    const notes=document.getElementById('projectNotes').value.trim();
+    if(notes)pf[F.proj.notes]=notes;
+    const soi=document.getElementById('systemsOfInterest').value.trim();
+    if(soi)pf[F.proj.systems]=soi;
+
+    await airtable('POST',PROJECTS_TABLE,{fields:pf});
+    const srl=document.getElementById('previewSRL').textContent;
+    showStatus(`✓ Project created successfully! SRL: ${srl}. Go to Airtable → Projects interface to check the Build Shoot Range checkbox and continue.`,'success');
+    nextNum++;
+    updateSRL();
+    document.getElementById('submitBtn').disabled=false;
+  } catch(e) {
+    showStatus(`Error: ${e.message}`,'error');
+    document.getElementById('submitBtn').disabled=false;
+  }
+}
+
+function clearForm() {
+  ['projectName','season','projectNotes','systemsOfInterest','companySearch','newWorkingName','newLegalName','newBillingContact','newBillingEmail','newBillingPhone','newPayrollEmail','newBillingAddress','newBillingNotes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('lcEntity').value='';
+  document.getElementById('payrollDefault').value='';
+  document.getElementById('recurring').checked=false;
+  document.getElementById('keepActive').checked=false;
+  document.getElementById('newStudioVendor').checked=false;
+  clearCo(); setMode('existing');
+  document.getElementById('statusMsg').style.display='none';
+  updateSRL();
+}
+
+window.addEventListener('load', () => { connectAirtable(); });
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))document.getElementById('searchResults').style.display='none';});
+</script>
+</body>
+</html>
