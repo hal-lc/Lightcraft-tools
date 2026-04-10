@@ -21,6 +21,7 @@ label{display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:5px}
 .hint{font-size:11px;color:#999;font-weight:400;margin-left:4px}
 input,select,textarea{width:100%;font-family:inherit;font-size:14px;color:#1a1a1a;background:#fafaf8;border:1px solid #ddd;border-radius:8px;padding:8px 10px;outline:none;transition:border-color .15s}
 input:focus,select:focus,textarea:focus{border-color:#1a1a1a;background:white}
+input[type=date]{cursor:pointer}
 textarea{resize:vertical;min-height:72px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .computed{display:grid;grid-template-columns:150px 1fr;gap:12px;margin-bottom:14px}
@@ -55,7 +56,9 @@ textarea{resize:vertical;min-height:72px}
 .status{padding:12px 14px;border-radius:8px;font-size:14px;margin-top:1rem;line-height:1.5;display:none}
 .ok{background:#f0faf4;color:#1a7a40;border:1px solid #b3e8c8}
 .err{background:#fef5f5;color:#c0392b;border:1px solid #f5c6c6}
+.inf{background:#f5f5f3;color:#666;border:1px solid #e8e8e4}
 .loading-bar{text-align:center;padding:2rem;color:#888;font-size:14px}
+.date-note{font-size:12px;color:#999;margin-top:6px;font-style:italic}
 </style>
 </head>
 <body>
@@ -64,11 +67,12 @@ textarea{resize:vertical;min-height:72px}
     <div class="logo">LC</div>
     <div>
       <h1>New project intake</h1>
-      <div class="sub">Lightcraft Project Management &mdash; creates records directly in Airtable</div>
+      <div class="sub">Lightcraft Project Management &mdash; creates project and shoot range directly in Airtable</div>
     </div>
   </div>
-  <div id="loadingMsg" class="loading-bar">Loading production companies...</div>
+  <div id="loadingMsg" class="loading-bar">Loading...</div>
   <div id="mainForm" style="display:none">
+
     <div class="section">
       <div class="stitle">Project details</div>
       <div class="row2">
@@ -119,15 +123,16 @@ textarea{resize:vertical;min-height:72px}
       <div class="field"><label>Project notes</label><textarea id="projectNotes" placeholder="General notes, director, DP, special circumstances..."></textarea></div>
       <div class="field"><label>Systems of interest</label><textarea id="systemsOfInterest" placeholder="UAS platforms, cameras, special equipment..." style="min-height:56px"></textarea></div>
     </div>
+
     <div class="section">
-      <div class="stitle">Production company</div>
+      <div class="stitle">Production company<span class="req">*</span></div>
       <div class="toggle">
         <button class="active" id="btnExisting" onclick="setMode('existing')">Select existing company</button>
         <button id="btnNew" onclick="setMode('new')">+ Add new company</button>
       </div>
       <div id="existingSection">
         <div class="field">
-          <label>Search production companies<span class="req">*</span></label>
+          <label>Search production companies</label>
           <div class="swrap">
             <input type="text" id="companySearch" placeholder="Type to search..." oninput="searchCos()" autocomplete="off">
             <div class="sresults" id="searchResults"></div>
@@ -149,23 +154,42 @@ textarea{resize:vertical;min-height:72px}
           <div class="field"><label>Billing contact phone</label><input type="tel" id="newBillingPhone"></div>
           <div class="field"><label>Producer payroll email</label><input type="email" id="newPayrollEmail"></div>
         </div>
-        
-        <div style="font-size:12px;color:#888;margin-bottom:8px;">Billing address and billing notes can be added in the Production Companies table after creation.</div>
-        <div class="cr"><input type="checkbox" id="newStudioVendor"><label for="newStudioVendor">Studio vendor (insurance &amp; contracts on file)</label></div>
+        <div class="date-note">Billing address and billing notes can be added in the Production Companies table after creation.</div>
+        <div class="cr" style="margin-top:10px"><input type="checkbox" id="newStudioVendor"><label for="newStudioVendor">Studio vendor (insurance &amp; contracts on file)</label></div>
       </div>
     </div>
+
+    <div class="section">
+      <div class="stitle">First shoot range</div>
+      <div class="field">
+        <label>Label suffix<span class="hint">Date or location appended to SRL (e.g. Apr 5-18, New Orleans)</span></label>
+        <input type="text" id="labelSuffix" placeholder="e.g. Apr 5-18">
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:12px;color:#999;margin-bottom:12px">Dates are optional — all can be added or updated in the DTB later.</div>
+      <div class="row2">
+        <div class="field"><label>Tech scout start</label><input type="date" id="scoutStart"></div>
+        <div class="field"><label>Tech scout end</label><input type="date" id="scoutEnd"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Shoot start</label><input type="date" id="shootStart"></div>
+        <div class="field"><label>Shoot end</label><input type="date" id="shootEnd"></div>
+      </div>
+    </div>
+
     <div class="actions">
       <button class="btn btng" onclick="clearForm()">Clear form</button>
-      <button class="btn btnp" id="submitBtn" onclick="submitForm()">Create project</button>
+      <button class="btn btnp" id="submitBtn" onclick="submitForm()">Create project &amp; shoot range</button>
     </div>
     <div id="statusMsg" class="status"></div>
   </div>
 </div>
 <script>
-var BASE="appX3LNIvzae1gxdb",PT="tblMrGl8Pwv5gqz36",CT="tblNea0IkHGn1XTNS";
+var BASE="appX3LNIvzae1gxdb",PT="tblMrGl8Pwv5gqz36",CT="tblNea0IkHGn1XTNS",ST="tblv6kGPHMzgm02mW";
 var t1="patPO4LsK11k8zN5s.",t2="70c8b462e95b8ff96968dfe8685cbf69e59f154019717e0ad8fb835c8e7054d3",TOK=t1+t2;
 var PF={name:"fld159op32DNyVgsF",entity:"fldJ6FtzufkctoUTn",payroll:"fldeV01p4F7a2Xk5q",season:"fld725JNax2WxtnBM",recurring:"fldM6R6TbyEQsoTwe",keepActive:"fld9U47LrEHS7jzVa",notes:"fld9HZtxzJiFnNzE7",systems:"fldqGR2MfUAPIryhK",companies:"fldYSUi6Z7ndYgCsv"};
 var CF={working:"fld9Fo7Vmx36ukzDD",legal:"fldla0Wt3iib8NJ8b",bContact:"fldYE5QJZ17rkGmkx",bEmail:"fldidZ1IRlP7UulyF",bPhone:"fldHVEQGujTbqKXb0",studio:"fldr9BWzy0cvAmsUd",pEmail:"fldQDVAE6YOzBDT43"};
+var SF={rangeLabel:"fldxwQhd57VA9IKtU",labelSuffix:"fldMNSrbxiNqr0Scp",rangeStatus:"fldD7KYWhCi5CbpXM",projects:"flddFL2dgacAY03iN",scoutStart:"fldLF6HHr0CPaBbp4",scoutEnd:"fldqkpu3L3HQvf6Fb",shootStart:"fldj67ev48d0G3eko",shootEnd:"fldfhMcJq6F67HCt7",sortDate:"fldkhXJWuHgYe8b6t"};
 var PREFIX={"Los Angeles":"","LC East":"LE","LC UK":"UK","LC Spain":"EU","LC OH":"OH","LC NM":"NM"};
 var mode="existing",selCo=null,cos=[],nextNum=1;
 
@@ -176,7 +200,7 @@ async function at(method,path,body){
   var opts={method:method,headers:{"Authorization":"Bearer "+TOK,"Content-Type":"application/json"}};
   if(body)opts.body=JSON.stringify(body);
   var res=await fetch("https://api.airtable.com/v0/"+BASE+"/"+path,opts);
-  if(!res.ok){var err=await res.json();throw new Error("API "+res.status+": "+JSON.stringify(err));}
+  if(!res.ok){var e=await res.json();throw new Error(res.status+": "+JSON.stringify(e));}
   return res.json();
 }
 
@@ -189,14 +213,13 @@ async function init(){
     g("loadingMsg").style.display="none";
     g("mainForm").style.display="block";
     updateSRL();
-  }catch(e){
-    g("loadingMsg").textContent="Error loading: "+e.message;
-  }
+  }catch(e){g("loadingMsg").textContent="Error loading: "+e.message;}
 }
 
 function fmtNum(n,entity){
   var p=PREFIX[entity]||"";
-  return p+"3"+("000"+n).slice(-4);
+  var s=String(n);while(s.length<4)s="0"+s;
+  return p+"3"+s;
 }
 
 function updateSRL(){
@@ -232,10 +255,9 @@ function searchCos(){
   }
   var html="";
   hits.slice(0,10).forEach(function(c){
-    html+='<div class="sitem" onclick="selectCo(this)" data-id="'+c.id+'" data-working="'+c.working.replace(/"/g,'&quot;')+'" data-legal="'+c.legal.replace(/"/g,'&quot;')+'">';
-    html+='<div class="sname">'+c.working+'</div>';
-    if(c.legal)html+='<div class="slegal">'+c.legal+'</div>';
-    html+='</div>';
+    html+='<div class="sitem" onclick="selectCo(this)" data-id="'+c.id+'" data-working="'+c.working.replace(/"/g,"&quot;")+'" data-legal="'+c.legal.replace(/"/g,"&quot;")+'"><div class="sname">'+c.working+"</div>";
+    if(c.legal)html+='<div class="slegal">'+c.legal+"</div>";
+    html+="</div>";
   });
   res.innerHTML=html;
   res.style.display="block";
@@ -246,18 +268,14 @@ function selectCo(el){
   selCo={id:id,working:working,legal:legal};
   g("searchResults").style.display="none";
   g("companySearch").value="";
-  var disp='<div class="pill"><span>'+working+(legal?" \u2014 "+legal:"")+'</span><button onclick="clearCo()">\u2715</button></div>';
-  g("selectedDisplay").innerHTML=disp;
+  g("selectedDisplay").innerHTML='<div class="pill"><span>'+working+(legal?" \u2014 "+legal:"")+'</span><button onclick="clearCo()">\u2715</button></div>';
   updateSRL();
 }
 
 function clearCo(){selCo=null;g("selectedDisplay").innerHTML="";updateSRL();}
 
 function showStatus(msg,cls){
-  var el=g("statusMsg");
-  el.textContent=msg;
-  el.className="status "+cls;
-  el.style.display="block";
+  var el=g("statusMsg");el.textContent=msg;el.className="status "+cls;el.style.display="block";
 }
 
 async function submitForm(){
@@ -266,12 +284,14 @@ async function submitForm(){
   if(!entity){showStatus("LC Entity is required.","err");return;}
   if(mode==="existing"&&!selCo){showStatus("Please select a production company.","err");return;}
   if(mode==="new"&&!gv("newWorkingName")){showStatus("Company working name is required.","err");return;}
+
   g("submitBtn").disabled=true;
-  showStatus("Creating project...","loading-bar");
+  showStatus("Step 1 of 3: Creating production company...","inf");
+
   try{
     var coId=selCo?selCo.id:null;
+
     if(mode==="new"){
-      showStatus("Creating production company...","loading-bar");
       var cf={};
       cf[CF.working]=gv("newWorkingName");
       if(gv("newLegalName"))cf[CF.legal]=gv("newLegalName");
@@ -279,11 +299,13 @@ async function submitForm(){
       if(gv("newBillingEmail"))cf[CF.bEmail]=gv("newBillingEmail");
       if(gv("newBillingPhone"))cf[CF.bPhone]=gv("newBillingPhone");
       if(gv("newPayrollEmail"))cf[CF.pEmail]=gv("newPayrollEmail");
-                  if(g("newStudioVendor").checked)cf[CF.studio]=true;
-      var nc=await at("POST",CT,{fields:cf,typecast:true});
+      if(g("newStudioVendor").checked)cf[CF.studio]=true;
+      var nc=await at("POST",CT,{fields:cf});
       coId=nc.id;
+      cos.push({id:coId,working:gv("newWorkingName"),legal:gv("newLegalName")});
     }
-    showStatus("Creating project record...","loading-bar");
+
+    showStatus("Step 2 of 3: Creating project...","inf");
     var pf={};
     pf[PF.name]=pname;
     pf[PF.entity]=entity;
@@ -292,13 +314,37 @@ async function submitForm(){
     if(gv("season"))pf[PF.season]=gv("season");
     if(g("recurring").checked)pf[PF.recurring]=true;
     if(g("keepActive").checked)pf[PF.keepActive]=true;
-    if(gv("projectNotes"))pf[PF.notes]=gv("projectNotes");
-    if(gv("systemsOfInterest"))pf[PF.systems]=gv("systemsOfInterest");
-    await at("POST",PT,{fields:pf,typecast:true});
+    var np=await at("POST",PT,{fields:pf});
+    var projectId=np.id;
+
+    showStatus("Step 3 of 3: Creating shoot range...","inf");
     var srl=g("previewSRL").textContent;
-    nextNum++;updateSRL();
-    showStatus("Project created! SRL: "+srl+". Go to Airtable and check Build Shoot Range to create the first shoot range.","ok");
+    var suffix=gv("labelSuffix");
+    var rangeLabel=suffix?srl+" - "+suffix:srl;
+
+    var sf={};
+    sf[SF.rangeLabel]=rangeLabel;
+    sf[SF.rangeStatus]="Inquiry";
+    sf[SF.projects]=[{id:projectId}];
+    if(suffix)sf[SF.labelSuffix]=suffix;
+
+    var shootStartVal=gv("shootStart");
+    var scoutStartVal=gv("scoutStart");
+    if(gv("scoutStart"))sf[SF.scoutStart]=gv("scoutStart");
+    if(gv("scoutEnd"))sf[SF.scoutEnd]=gv("scoutEnd");
+    if(shootStartVal)sf[SF.shootStart]=shootStartVal;
+    if(gv("shootEnd"))sf[SF.shootEnd]=gv("shootEnd");
+
+    var sortDate=shootStartVal||scoutStartVal||"";
+    if(sortDate)sf[SF.sortDate]=sortDate;
+
+    await at("POST",ST,{fields:sf});
+
+    nextNum++;
+    updateSRL();
+    showStatus("Done! Project and shoot range created. SRL: "+rangeLabel+". Go to the DTB in Airtable to continue.","ok");
     g("submitBtn").disabled=false;
+
   }catch(e){
     showStatus("Error: "+e.message,"err");
     g("submitBtn").disabled=false;
@@ -306,7 +352,7 @@ async function submitForm(){
 }
 
 function clearForm(){
-  ["projectName","season","projectNotes","systemsOfInterest","companySearch","newWorkingName","newLegalName","newBillingContact","newBillingEmail","newBillingPhone","newPayrollEmail","newBillingAddress","newBillingNotes"].forEach(function(id){var el=g(id);if(el)el.value="";});
+  ["projectName","season","projectNotes","systemsOfInterest","companySearch","newWorkingName","newLegalName","newBillingContact","newBillingEmail","newBillingPhone","newPayrollEmail","labelSuffix","scoutStart","scoutEnd","shootStart","shootEnd"].forEach(function(id){var el=g(id);if(el)el.value="";});
   g("lcEntity").value="";g("payrollDefault").value="";
   g("recurring").checked=false;g("keepActive").checked=false;
   var sv=g("newStudioVendor");if(sv)sv.checked=false;
