@@ -282,7 +282,7 @@ async function submitForm(){
       if(gv("newBillingAddress"))cf[CF.bAddr]=gv("newBillingAddress");
       if(gv("newBillingNotes"))cf[CF.bNotes]=gv("newBillingNotes");
       if(g("newStudioVendor").checked)cf[CF.studio]=true;
-      var nc=await at("POST",CT,{fields:cf});
+      var nc=await at("POST",CT,{fields:cf,typecast:true});
       coId=nc.id;
     }
     showStatus("Creating project record...","loading-bar");
@@ -296,7 +296,7 @@ async function submitForm(){
     if(g("keepActive").checked)pf[PF.keepActive]=true;
     if(gv("projectNotes"))pf[PF.notes]=gv("projectNotes");
     if(gv("systemsOfInterest"))pf[PF.systems]=gv("systemsOfInterest");
-    await at("POST",PT,{fields:pf});
+    await at("POST",PT,{fields:pf,typecast:true});
     var srl=g("previewSRL").textContent;
     nextNum++;updateSRL();
     showStatus("Project created! SRL: "+srl+". Go to Airtable and check Build Shoot Range to create the first shoot range.","ok");
