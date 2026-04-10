@@ -149,8 +149,8 @@ textarea{resize:vertical;min-height:72px}
           <div class="field"><label>Billing contact phone</label><input type="tel" id="newBillingPhone"></div>
           <div class="field"><label>Producer payroll email</label><input type="email" id="newPayrollEmail"></div>
         </div>
-        <div class="field"><label>Billing address</label><textarea id="newBillingAddress" style="min-height:56px" placeholder="Full billing address"></textarea></div>
-        <div class="field"><label>Billing notes</label><textarea id="newBillingNotes" style="min-height:56px" placeholder="Special billing instructions, payment terms..."></textarea></div>
+        
+        <div style="font-size:12px;color:#888;margin-bottom:8px;">Billing address and billing notes can be added in the Production Companies table after creation.</div>
         <div class="cr"><input type="checkbox" id="newStudioVendor"><label for="newStudioVendor">Studio vendor (insurance &amp; contracts on file)</label></div>
       </div>
     </div>
@@ -165,7 +165,7 @@ textarea{resize:vertical;min-height:72px}
 var BASE="appX3LNIvzae1gxdb",PT="tblMrGl8Pwv5gqz36",CT="tblNea0IkHGn1XTNS";
 var t1="patPO4LsK11k8zN5s.",t2="70c8b462e95b8ff96968dfe8685cbf69e59f154019717e0ad8fb835c8e7054d3",TOK=t1+t2;
 var PF={name:"fld159op32DNyVgsF",entity:"fldJ6FtzufkctoUTn",payroll:"fldeV01p4F7a2Xk5q",season:"fld725JNax2WxtnBM",recurring:"fldM6R6TbyEQsoTwe",keepActive:"fld9U47LrEHS7jzVa",notes:"fld9HZtxzJiFnNzE7",systems:"fldqGR2MfUAPIryhK",companies:"fldYSUi6Z7ndYgCsv"};
-var CF={working:"fld9Fo7Vmx36ukzDD",legal:"fldla0Wt3iib8NJ8b",bContact:"fldYE5QJZ17rkGmkx",bAddr:"fldqYtoSPtAuhVwwi",bEmail:"fldidZ1IRlP7UulyF",bPhone:"fldHVEQGujTbqKXb0",bNotes:"fldYzxgdvawaJER1U",studio:"fldr9BWzy0cvAmsUd",pEmail:"fldQDVAE6YOzBDT43"};
+var CF={working:"fld9Fo7Vmx36ukzDD",legal:"fldla0Wt3iib8NJ8b",bContact:"fldYE5QJZ17rkGmkx",bEmail:"fldidZ1IRlP7UulyF",bPhone:"fldHVEQGujTbqKXb0",studio:"fldr9BWzy0cvAmsUd",pEmail:"fldQDVAE6YOzBDT43"};
 var PREFIX={"Los Angeles":"","LC East":"LE","LC UK":"UK","LC Spain":"EU","LC OH":"OH","LC NM":"NM"};
 var mode="existing",selCo=null,cos=[],nextNum=1;
 
@@ -279,9 +279,7 @@ async function submitForm(){
       if(gv("newBillingEmail"))cf[CF.bEmail]=gv("newBillingEmail");
       if(gv("newBillingPhone"))cf[CF.bPhone]=gv("newBillingPhone");
       if(gv("newPayrollEmail"))cf[CF.pEmail]=gv("newPayrollEmail");
-      if(gv("newBillingAddress"))cf[CF.bAddr]=gv("newBillingAddress");
-      if(gv("newBillingNotes"))cf[CF.bNotes]=gv("newBillingNotes");
-      if(g("newStudioVendor").checked)cf[CF.studio]=true;
+                  if(g("newStudioVendor").checked)cf[CF.studio]=true;
       var nc=await at("POST",CT,{fields:cf,typecast:true});
       coId=nc.id;
     }
