@@ -311,7 +311,7 @@ async function submitForm(){
     var pf={};
     pf[PF.name]=pname;
     pf[PF.entity]=entity;
-    if(coId)pf[PF.companies]=[{id:coId}];
+    if(coId)pf[PF.companies]=[coId];
     if(gv("payrollDefault"))pf[PF.payroll]=gv("payrollDefault");
     if(gv("season"))pf[PF.season]=gv("season");
     if(g("recurring").checked)pf[PF.recurring]=true;
@@ -329,7 +329,7 @@ async function submitForm(){
     var sf={};
     sf[SF.rangeLabel]=rangeLabel;
     sf[SF.rangeStatus]="Inquiry";
-    sf[SF.projects]=[{id:String(projectId)}];
+    sf[SF.projects]=[String(projectId)];
     if(suffix)sf[SF.labelSuffix]=suffix;
 
     var shootStartVal=gv("shootStart");
