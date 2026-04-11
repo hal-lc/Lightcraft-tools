@@ -301,7 +301,7 @@ async function submitForm(){
       if(gv("newPayrollEmail"))cf[CF.pEmail]=gv("newPayrollEmail");
       if(g("newStudioVendor").checked)cf[CF.studio]=true;
       var nc=await at("POST",CT,{fields:cf});
-      coId=nc.id;
+      coId=nc.records[0].id;
       cos.push({id:coId,working:gv("newWorkingName"),legal:gv("newLegalName")});
     }
 
@@ -315,7 +315,7 @@ async function submitForm(){
     if(g("recurring").checked)pf[PF.recurring]=true;
     if(g("keepActive").checked)pf[PF.keepActive]=true;
     var np=await at("POST",PT,{fields:pf});
-    var projectId=np.id;
+    var projectId=np.records[0].id;
 
     showStatus("Step 3 of 3: Creating shoot range...","inf");
     var srl=g("previewSRL").textContent;
