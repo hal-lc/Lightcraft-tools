@@ -207,9 +207,11 @@ async function at(method,path,body){
 async function init(){
   try{
     var cd=await at("GET",CT+"?fields%5B%5D="+CF.working+"&fields%5B%5D="+CF.legal+"&pageSize=100");
-    cos=(cd.records||[]).map(function(r){return{id:r.id,working:r.fields[CF.working]||"",legal:r.fields[CF.legal]||""};});
-    var pd=await at("GET",PT+"?fields%5B%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bfield%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=1");
-    nextNum=pd.records&&pd.records.length>0?(pd.records[0].fields["fldFNVW27yXF3v7Ds"]||0)+1:1;
+    cos=[];
+    if(cd&&cd.records){cos=cd.records.map(function(r){return{id:r.id,working:(r.fields&&r.fields[CF.working])||"",legal:(r.fields&&r.fields[CF.legal])||""};});}
+    var pd=await at("GET",PT+"?fields%5B%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bfield%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bdirection%5D=desc&pageSize=1");
+    nextNum=1;
+    try{if(pd&&pd.records&&pd.records.length>0&&pd.records[0].fields){nextNum=(pd.records[0].fields["fldFNVW27yXF3v7Ds"]||0)+1;}}catch(ex){nextNum=1;}
     g("loadingMsg").style.display="none";
     g("mainForm").style.display="block";
     updateSRL();
@@ -315,7 +317,9 @@ async function submitForm(){
     if(g("recurring").checked)pf[PF.recurring]=true;
     if(g("keepActive").checked)pf[PF.keepActive]=true;
     var np=await at("POST",PT,{fields:pf});
+    console.log("Project response:",JSON.stringify(np));
     var projectId=np.id;
+    console.log("projectId:",projectId);
 
     showStatus("Step 3 of 3: Creating shoot range...","inf");
     var srl=g("previewSRL").textContent;
@@ -338,6 +342,7 @@ async function submitForm(){
     var sortDate=shootStartVal||scoutStartVal||"";
     if(sortDate)sf[SF.sortDate]=sortDate;
 
+    console.log("Shoot range fields:",JSON.stringify(sf));
     await at("POST",ST,{fields:sf});
 
     nextNum++;
