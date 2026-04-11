@@ -81,6 +81,16 @@ textarea{resize:vertical;min-height:72px}
           <input type="text" id="projectName" placeholder="e.g. Ally Clark" oninput="updateSRL()">
         </div>
         <div class="field">
+          <label>Season</label>
+          <input type="text" id="season" placeholder="e.g. S1, S2">
+        </div>
+      </div>
+      <div class="computed">
+        <div class="cf"><div class="cfl">Project number</div><div class="cfv" id="previewPN">&mdash;</div></div>
+        <div class="cf"><div class="cfl">SRL (auto-assembled)</div><div class="cfv" id="previewSRL">&mdash;</div></div>
+      </div>
+      <div class="row2">
+        <div class="field">
           <label>LC Entity<span class="req">*</span></label>
           <select id="lcEntity" onchange="updateSRL()">
             <option value="">Select entity...</option>
@@ -92,12 +102,6 @@ textarea{resize:vertical;min-height:72px}
             <option value="LC NM">LC NM (NM)</option>
           </select>
         </div>
-      </div>
-      <div class="computed">
-        <div class="cf"><div class="cfl">Project number</div><div class="cfv" id="previewPN">&mdash;</div></div>
-        <div class="cf"><div class="cfl">SRL (auto-assembled)</div><div class="cfv" id="previewSRL">&mdash;</div></div>
-      </div>
-      <div class="row2">
         <div class="field">
           <label>Payroll default</label>
           <select id="payrollDefault">
@@ -109,10 +113,6 @@ textarea{resize:vertical;min-height:72px}
             <option value="UK">UK</option>
             <option value="Aether">Aether</option>
           </select>
-        </div>
-        <div class="field">
-          <label>Season</label>
-          <input type="text" id="season" placeholder="e.g. S1, S2">
         </div>
       </div>
       <div style="display:flex;gap:24px;margin-bottom:14px">
@@ -206,9 +206,9 @@ async function at(method,path,body){
 
 async function init(){
   try{
-    var cd=await at("GET",CT+"?fields[]="+CF.working+"&fields[]="+CF.legal+"&pageSize=100");
+    var cd=await at("GET",CT+"?fields%5B%5D="+CF.working+"&fields%5B%5D="+CF.legal+"&pageSize=100");
     cos=(cd.records||[]).map(function(r){return{id:r.id,working:r.fields[CF.working]||"",legal:r.fields[CF.legal]||""};});
-    var pd=await at("GET",PT+"?fields[]=fldFNVW27yXF3v7Ds&sort[0][field]=fldFNVW27yXF3v7Ds&sort[0][direction]=desc&maxRecords=1");
+    var pd=await at("GET",PT+"?fields%5B%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bfield%5D=fldFNVW27yXF3v7Ds&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=1");
     nextNum=pd.records&&pd.records.length>0?(pd.records[0].fields["fldFNVW27yXF3v7Ds"]||0)+1:1;
     g("loadingMsg").style.display="none";
     g("mainForm").style.display="block";
@@ -325,7 +325,7 @@ async function submitForm(){
     var sf={};
     sf[SF.rangeLabel]=rangeLabel;
     sf[SF.rangeStatus]="Inquiry";
-    sf[SF.projects]=[{id:projectId}];
+    sf[SF.projects]=[{id:String(projectId)}];
     if(suffix)sf[SF.labelSuffix]=suffix;
 
     var shootStartVal=gv("shootStart");
