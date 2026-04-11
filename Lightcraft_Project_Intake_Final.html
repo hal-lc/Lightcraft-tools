@@ -187,7 +187,7 @@ textarea{resize:vertical;min-height:72px}
 <script>
 var BASE="appX3LNIvzae1gxdb",PT="tblMrGl8Pwv5gqz36",CT="tblNea0IkHGn1XTNS",ST="tblv6kGPHMzgm02mW";
 var t1="patPO4LsK11k8zN5s.",t2="70c8b462e95b8ff96968dfe8685cbf69e59f154019717e0ad8fb835c8e7054d3",TOK=t1+t2;
-var PF={name:"fld159op32DNyVgsF",entity:"fldJ6FtzufkctoUTn",payroll:"fldeV01p4F7a2Xk5q",season:"fld725JNax2WxtnBM",recurring:"fldM6R6TbyEQsoTwe",keepActive:"fld9U47LrEHS7jzVa",notes:"fld9HZtxzJiFnNzE7",systems:"fldqGR2MfUAPIryhK",companies:"fldYSUi6Z7ndYgCsv"};
+var PF={name:"fld159op32DNyVgsF",entity:"fldJ6FtzufkctoUTn",payroll:"fldeV01p4F7a2Xk5q",season:"fld725JNax2WxtnBM",recurring:"fldM6R6TbyEQsoTwe",keepActive:"fld9U47LrEHS7jzVa",notes:"fld9HZtxzJiFnNzE7",systems:"fldqGR2MfUAPIryhK",companies:"fldYSUi6Z7ndYgCsv",companyWorkingName:"fld7EGxopxuutnJRd"};
 var CF={working:"fld9Fo7Vmx36ukzDD",legal:"fldla0Wt3iib8NJ8b",bContact:"fldYE5QJZ17rkGmkx",bEmail:"fldidZ1IRlP7UulyF",bPhone:"fldHVEQGujTbqKXb0",studio:"fldr9BWzy0cvAmsUd",pEmail:"fldQDVAE6YOzBDT43"};
 var SF={rangeLabel:"fldxwQhd57VA9IKtU",labelSuffix:"fldMNSrbxiNqr0Scp",rangeStatus:"fldD7KYWhCi5CbpXM",projects:"flddFL2dgacAY03iN",scoutStart:"fldLF6HHr0CPaBbp4",scoutEnd:"fldqkpu3L3HQvf6Fb",shootStart:"fldj67ev48d0G3eko",shootEnd:"fldfhMcJq6F67HCt7",sortDate:"fldkhXJWuHgYe8b6t"};
 var PREFIX={"Los Angeles":"","LC East":"LE","LC UK":"UK","LC Spain":"EU","LC OH":"OH","LC NM":"NM"};
@@ -312,6 +312,8 @@ async function submitForm(){
     pf[PF.name]=pname;
     pf[PF.entity]=entity;
     if(coId)pf[PF.companies]=[coId];
+    var cwn=mode==="new"?gv("newWorkingName"):(selCo?selCo.working:"");
+    if(cwn)pf[PF.companyWorkingName]=cwn;
     if(gv("payrollDefault"))pf[PF.payroll]=gv("payrollDefault");
     if(gv("season"))pf[PF.season]=gv("season");
     if(g("recurring").checked)pf[PF.recurring]=true;
