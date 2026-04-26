@@ -551,6 +551,9 @@ async function loadData() {
       return a.days - b.days;
     });
 
+    if (dtbRecords.length) {
+      console.log('RAW FIRST RECORD:', JSON.stringify(dtbRecords[0]));
+    }
     renderAll();
     updateStats();
 
