@@ -544,6 +544,14 @@ async function loadData() {
       return a.days - b.days;
     });
 
+    if (dtbRecords.length) {
+      const r = dtbRecords[0];
+      console.log('Record keys:', Object.keys(r));
+      console.log('Fields keys:', Object.keys(r.fields || {}));
+      console.log('Range Label field value:', r.fields['fldxwQhd57VA9IKtU']);
+      console.log('Range Status field value:', r.fields['fldD7KYWhCi5CbpXM']);
+      console.log('All field values:', JSON.stringify(r.fields).substring(0, 500));
+    }
     renderAll();
     updateStats();
 
