@@ -496,13 +496,17 @@ async function loadData() {
       const days = firstDate ? daysDiff(firstDate) : null;
       const clFields = clMap[r.id] || null;
 
-      // Parse payroll — lookup returns array
+      // Parse payroll — multipleLookupValues returns array of objects or strings
       const payrollRaw = f[CONFIG.dtb.payroll];
-      const payroll = Array.isArray(payrollRaw) ? payrollRaw[0] : (payrollRaw || '');
+      const payroll = Array.isArray(payrollRaw) && payrollRaw.length
+        ? (typeof payrollRaw[0] === 'object' ? payrollRaw[0].name || '' : payrollRaw[0])
+        : (payrollRaw || '');
 
-      // Parse entity — lookup returns array
+      // Parse entity — multipleLookupValues returns array of objects or strings
       const entityRaw = f[CONFIG.dtb.lcEntity];
-      const entity = Array.isArray(entityRaw) ? entityRaw[0] : (entityRaw || '');
+      const entity = Array.isArray(entityRaw) && entityRaw.length
+        ? (typeof entityRaw[0] === 'object' ? entityRaw[0].name || '' : entityRaw[0])
+        : (entityRaw || '');
 
       return {
         id: r.id,
@@ -543,8 +547,6 @@ async function loadData() {
     renderAll();
     updateStats();
 
-    if (dtbRecords.length) console.log('DTB[0] fields:', JSON.stringify(dtbRecords[0].fields));
-    console.log('Ranges built:', allRanges.length, allRanges.slice(0,3).map(r => ({label:r.label,status:r.status,sc:r.statusClass})));
     document.getElementById('last-updated').textContent = 'Updated ' + fmtTime(new Date());
     scheduleRefresh();
 
