@@ -233,7 +233,7 @@
   <button class="filter-btn" id="fb-billing" onclick="setFilter('billing')">Billing</button>
   <div class="filter-sep"></div>
   <span class="filter-label">Entity:</span>
-  <button class="filter-btn active-entity" id="fe-all" onclick="setEntity('all')">All</button>
+  <button class="filter-btn active-all" id="fe-all" onclick="setEntity('all')">All</button>
   <button class="filter-btn" id="fe-la" onclick="setEntity('Los Angeles')">LA</button>
   <button class="filter-btn" id="fe-le" onclick="setEntity('LC East')">LE</button>
   <button class="filter-btn" id="fe-uk" onclick="setEntity('LC UK')">UK</button>
@@ -487,7 +487,8 @@ async function loadData() {
     // Process DTB records
     allRanges = dtbRecords.map(r => {
       const f = r.fields;
-      const status = f[CONFIG.dtb.rangeStatus]?.name || f[CONFIG.dtb.rangeStatus] || '';
+      const statusRaw = f[CONFIG.dtb.rangeStatus];
+      const status = (typeof statusRaw === 'object' && statusRaw !== null) ? (statusRaw.name || '') : (statusRaw || '');
       const statusClass = classifyStatus(status);
       const shootStart = f[CONFIG.dtb.shootStart] || null;
       const travelOutStart = f[CONFIG.dtb.travelOutStart] || null;
@@ -508,7 +509,7 @@ async function loadData() {
         label: f[CONFIG.dtb.rangeLabel] || '(no label)',
         status,
         statusClass,
-        billingStatus: f[CONFIG.dtb.billingStatus]?.name || f[CONFIG.dtb.billingStatus] || '',
+        billingStatus: (typeof f[CONFIG.dtb.billingStatus] === 'object' && f[CONFIG.dtb.billingStatus]) ? f[CONFIG.dtb.billingStatus].name : (f[CONFIG.dtb.billingStatus] || ''),
         payroll,
         entity,
         quoteNum: f[CONFIG.dtb.quoteNum] || '',
@@ -516,9 +517,9 @@ async function loadData() {
         rangeNotes: stripRichText(f[CONFIG.dtb.rangeNotes]),
         locationNotes: stripRichText(f[CONFIG.dtb.locationNotes]),
         equipNotes: stripRichText(f[CONFIG.dtb.equipNotes]),
-        primaryUAS: f[CONFIG.dtb.primaryUAS]?.name || f[CONFIG.dtb.primaryUAS] || '',
-        camera: f[CONFIG.dtb.camera]?.name || f[CONFIG.dtb.camera] || '',
-        provision: f[CONFIG.dtb.provision]?.name || f[CONFIG.dtb.provision] || '',
+        primaryUAS: (typeof f[CONFIG.dtb.primaryUAS] === 'object' && f[CONFIG.dtb.primaryUAS]) ? f[CONFIG.dtb.primaryUAS].name : (f[CONFIG.dtb.primaryUAS] || ''),
+        camera: (typeof f[CONFIG.dtb.camera] === 'object' && f[CONFIG.dtb.camera]) ? f[CONFIG.dtb.camera].name : (f[CONFIG.dtb.camera] || ''),
+        provision: (typeof f[CONFIG.dtb.provision] === 'object' && f[CONFIG.dtb.provision]) ? f[CONFIG.dtb.provision].name : (f[CONFIG.dtb.provision] || ''),
         shootStart,
         shootEnd: f[CONFIG.dtb.shootEnd] || null,
         travelOutStart,
@@ -542,6 +543,8 @@ async function loadData() {
     renderAll();
     updateStats();
 
+    if (dtbRecords.length) console.log('DTB[0] fields:', JSON.stringify(dtbRecords[0].fields));
+    console.log('Ranges built:', allRanges.length, allRanges.slice(0,3).map(r => ({label:r.label,status:r.status,sc:r.statusClass})));
     document.getElementById('last-updated').textContent = 'Updated ' + fmtTime(new Date());
     scheduleRefresh();
 
