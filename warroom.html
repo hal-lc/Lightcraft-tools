@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lightcraft / War Room</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --border-bright: #3a3a3a;
+    --text: #e8e8e8;
+    --text-dim: #8a9bb0;
+    --text-mid: #b0bec5;
+    --confirmed: #00cc66;
+    --confirmed-dim: rgba(0,204,102,0.10);
+    --inquiry: #3399ff;
+    --inquiry-dim: rgba(51,153,255,0.08);
+    --limbo: #ff9900;
+    --limbo-dim: rgba(255,153,0,0.10);
+    --billing: #cc44ff;
+    --billing-dim: rgba(204,68,255,0.10);
+    --hot: #ff4444;
+    --hot-dim: rgba(255,68,68,0.12);
+    --warn: #ff9900;
+    --green: #00cc66;
+    --green-dim: rgba(0,204,102,0.10);
+    --yellow: #ffcc00;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; min-height: 100vh; line-height: 1.5; }
+
+  /* PASSWORD GATE */
+  .gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 1rem; }
+  .gate-logo { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 1rem; }
+  .gate-input { background: var(--surface); border: 1px solid var(--border-bright); color: var(--text); font-family: var(--mono); font-size: 1rem; padding: 0.7rem 1.2rem; width: 200px; text-align: center; letter-spacing: 0.2em; outline: none; }
+  .gate-input:focus { border-color: var(--text-mid); }
+  .gate-hint { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.1em; }
+  .gate-error { color: var(--hot); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; }
+
+  /* TOPBAR */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.6rem; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
+  .logo span { color: var(--text-dim); font-weight: 300; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .timestamp { font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim); }
+  .refresh-indicator { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); letter-spacing: 0.05em; }
+  .btn { background: none; border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.35rem 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--text-mid); color: var(--text); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* SUMMARY BAR */
+  .summary-bar { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .stat-cell { flex: 1; min-width: 80px; padding: 0.7rem 1.4rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.2rem; }
+  .stat-value { font-family: var(--mono); font-size: 1.3rem; font-weight: 600; line-height: 1; }
+  .sv-confirmed { color: var(--confirmed); }
+  .sv-inquiry { color: var(--inquiry); }
+  .sv-open { color: var(--yellow); }
+  .sv-unstaffed { color: var(--hot); }
+
+  /* FILTER BAR */
+  .filter-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.6rem; border-bottom: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; }
+  .filter-label { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-right: 0.3rem; }
+  .filter-btn { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; padding: 0.25rem 0.7rem; border: 1px solid var(--border); background: none; color: var(--text-mid); cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+  .filter-btn:hover { border-color: var(--text-mid); color: var(--text); }
+  .filter-btn.active-confirmed { border-color: var(--confirmed); color: var(--confirmed); background: var(--confirmed-dim); }
+  .filter-btn.active-inquiry { border-color: var(--inquiry); color: var(--inquiry); background: var(--inquiry-dim); }
+  .filter-btn.active-limbo { border-color: var(--limbo); color: var(--limbo); background: var(--limbo-dim); }
+  .filter-btn.active-billing { border-color: var(--billing); color: var(--billing); background: var(--billing-dim); }
+  .filter-btn.active-all { border-color: var(--text-mid); color: var(--text); background: rgba(255,255,255,0.05); }
+  .filter-btn.active-entity { border-color: #aaa; color: #fff; background: rgba(255,255,255,0.08); }
+  .filter-sep { width: 1px; height: 16px; background: var(--border); margin: 0 0.3rem; }
+
+  /* ERROR / LOADING */
+  .error-bar { background: var(--hot-dim); border: 1px solid rgba(255,68,68,0.3); color: var(--hot); font-family: var(--mono); font-size: 0.7rem; padding: 0.6rem 1.6rem; display: none; }
+  .loading-overlay { display: none; align-items: center; justify-content: center; padding: 4rem; flex-direction: column; gap: 1rem; }
+  .loader { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--text-mid); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); letter-spacing: 0.08em; }
+
+  /* CONTENT */
+  .content { padding: 1.4rem 1.6rem; }
+
+  /* SECTION HEADERS */
+  .section-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.8rem; margin-top: 1.6rem; }
+  .section-header:first-child { margin-top: 0; }
+  .section-label { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+  .sl-confirmed { color: var(--confirmed); }
+  .sl-inquiry { color: var(--inquiry); }
+  .sl-limbo { color: var(--limbo); }
+  .sl-billing { color: var(--billing); }
+  .section-count { font-family: var(--mono); font-size: 0.58rem; color: var(--text-dim); }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* RANGE TABLE */
+  .range-table { width: 100%; border-collapse: collapse; margin-bottom: 0.5rem; background: var(--surface); }
+  .range-table thead tr { border-bottom: 2px solid var(--border-bright); }
+  .range-table th { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.5rem 0.8rem; text-align: left; font-weight: 500; white-space: nowrap; }
+  .range-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  .range-table tbody tr.row-clickable:hover { background: var(--surface2); cursor: pointer; }
+  .range-table td { padding: 0.65rem 0.8rem; vertical-align: top; }
+
+  .stripe-confirmed { border-left: 3px solid var(--confirmed); }
+  .stripe-inquiry { border-left: 3px solid var(--inquiry); }
+  .stripe-limbo { border-left: 3px solid var(--limbo); }
+  .stripe-billing { border-left: 3px solid var(--billing); }
+
+  .range-name { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .range-dates { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); margin-top: 0.2rem; }
+  .range-meta-inline { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); margin-top: 0.15rem; }
+
+  .days-badge { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; padding: 0.18rem 0.45rem; white-space: nowrap; display: inline-block; }
+  .db-today { background: var(--hot-dim); color: var(--hot); border: 1px solid rgba(255,68,68,0.4); }
+  .db-hot { background: var(--hot-dim); color: var(--hot); border: 1px solid rgba(255,68,68,0.25); }
+  .db-warn { background: rgba(255,153,0,0.1); color: var(--warn); border: 1px solid rgba(255,153,0,0.3); }
+  .db-ok { background: rgba(255,255,255,0.04); color: var(--text-mid); border: 1px solid var(--border); }
+  .db-past { background: rgba(255,255,255,0.02); color: var(--text-dim); border: 1px solid var(--border); font-style: italic; }
+  .db-tbd { color: var(--text-dim); font-size: 0.6rem; }
+
+  .status-pill { font-family: var(--mono); font-size: 0.6rem; padding: 0.15rem 0.4rem; display: inline-block; white-space: nowrap; }
+  .sp-confirmed { background: var(--confirmed-dim); color: var(--confirmed); }
+  .sp-inquiry { background: var(--inquiry-dim); color: var(--inquiry); }
+  .sp-limbo { background: var(--limbo-dim); color: var(--limbo); }
+  .sp-billing { background: var(--billing-dim); color: var(--billing); }
+  .sp-unknown { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+
+  /* CHECKLIST */
+  .check-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.22rem; font-family: var(--mono); font-size: 0.63rem; }
+  .check-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .cd-open { background: var(--hot); }
+  .cd-done { background: var(--green); }
+  .cd-partial { background: var(--warn); }
+  .check-name-open { color: var(--text); }
+  .check-name-done { color: var(--text-dim); text-decoration: line-through; }
+  .check-name-partial { color: var(--warn); }
+  .checklist-all-clear { font-family: var(--mono); font-size: 0.63rem; color: var(--green); }
+
+  /* STAFFING */
+  .staff-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.22rem; }
+  .staff-pos { font-family: var(--mono); font-size: 0.62rem; color: var(--text-mid); }
+  .staff-tag { font-family: var(--mono); font-size: 0.55rem; padding: 0.1rem 0.3rem; white-space: nowrap; }
+  .st-confirmed { background: var(--green-dim); color: var(--green); }
+  .st-open { background: var(--hot-dim); color: var(--hot); }
+  .st-lead { background: rgba(255,204,0,0.08); color: var(--yellow); }
+  .no-staffing { font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); }
+
+  /* QUOTE / BILLING */
+  .quote-ver { font-family: var(--mono); font-size: 0.7rem; color: var(--text); font-weight: 500; }
+  .billing-pill { font-family: var(--mono); font-size: 0.58rem; padding: 0.12rem 0.35rem; margin-top: 0.2rem; display: inline-block; }
+  .bp-issued { background: var(--green-dim); color: var(--green); }
+  .bp-pending { background: rgba(255,204,0,0.08); color: var(--yellow); }
+  .bp-none { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+
+  /* EQUIP PILLS */
+  .equip-pill { font-family: var(--mono); font-size: 0.58rem; padding: 0.1rem 0.3rem; margin-bottom: 0.15rem; display: inline-block; margin-right: 0.2rem; background: rgba(255,255,255,0.05); color: var(--text-mid); border: 1px solid var(--border); }
+
+  /* EXPAND ROW */
+  .expand-row { display: none; }
+  .expand-row td { padding: 0; }
+  .expand-inner { padding: 1rem 1.2rem; background: var(--bg); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem; }
+  .expand-section-label { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem; }
+  .expand-value { font-family: var(--mono); font-size: 0.68rem; color: var(--text-mid); line-height: 1.5; }
+  .expand-notes { font-family: var(--sans); font-size: 0.72rem; color: var(--text-mid); line-height: 1.5; font-style: italic; }
+
+  /* CREW DETAIL */
+  .crew-detail { font-family: var(--mono); font-size: 0.6rem; color: var(--text-dim); line-height: 1.4; margin-top: 0.2rem; }
+
+  .chevron { font-size: 0.65rem; color: var(--text-dim); transition: transform 0.2s; display: inline-block; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .empty-state { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); padding: 1.5rem; text-align: center; background: var(--surface); border: 1px solid var(--border); }
+  .table-wrap { overflow-x: auto; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); }
+
+  @media (max-width: 600px) {
+    .topbar { padding: 0.7rem 1rem; }
+    .content { padding: 1rem; }
+    .filter-bar { padding: 0.5rem 1rem; }
+    .summary-bar { flex-wrap: wrap; }
+    .stat-cell { min-width: 50%; border-right: none; border-bottom: 1px solid var(--border); }
+    .range-table th, .range-table td { padding: 0.5rem 0.5rem; }
+    .timestamp, .refresh-indicator { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div class="gate" id="gate">
+  <div class="gate-logo">Lightcraft / War Room</div>
+  <input class="gate-input" id="gate-input" type="password" placeholder="••••" maxlength="8" autofocus
+    onkeydown="if(event.key==='Enter')checkPw()">
+  <div class="gate-hint">Enter access code</div>
+  <div class="gate-error" id="gate-error"></div>
+</div>
+
+<!-- MAIN APP (hidden until auth) -->
+<div id="app" style="display:none;">
+
+<div class="topbar">
+  <div class="logo">Lightcraft <span>/</span> War Room</div>
+  <div class="topbar-right">
+    <div class="refresh-indicator" id="next-refresh">—</div>
+    <div class="timestamp" id="last-updated">—</div>
+    <button class="btn" id="btn-refresh" onclick="loadData()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="stat-cell"><div class="stat-label">Confirmed</div><div class="stat-value sv-confirmed" id="stat-confirmed">—</div></div>
+  <div class="stat-cell"><div class="stat-label">Inquiry</div><div class="stat-value sv-inquiry" id="stat-inquiry">—</div></div>
+  <div class="stat-cell"><div class="stat-label">Open checklist items</div><div class="stat-value sv-open" id="stat-open">—</div></div>
+  <div class="stat-cell"><div class="stat-label">Unstaffed positions</div><div class="stat-value sv-unstaffed" id="stat-unstaffed">—</div></div>
+  <div class="stat-cell"><div class="stat-label">Total ranges</div><div class="stat-value" id="stat-total" style="color:var(--text-mid)">—</div></div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Status:</span>
+  <button class="filter-btn active-all" id="fb-all" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" id="fb-confirmed" onclick="setFilter('confirmed')">Confirmed</button>
+  <button class="filter-btn" id="fb-inquiry" onclick="setFilter('inquiry')">Inquiry</button>
+  <button class="filter-btn" id="fb-limbo" onclick="setFilter('limbo')">Limbo</button>
+  <button class="filter-btn" id="fb-billing" onclick="setFilter('billing')">Billing</button>
+  <div class="filter-sep"></div>
+  <span class="filter-label">Entity:</span>
+  <button class="filter-btn active-entity" id="fe-all" onclick="setEntity('all')">All</button>
+  <button class="filter-btn" id="fe-la" onclick="setEntity('Los Angeles')">LA</button>
+  <button class="filter-btn" id="fe-le" onclick="setEntity('LC East')">LE</button>
+  <button class="filter-btn" id="fe-uk" onclick="setEntity('LC UK')">UK</button>
+  <div class="filter-sep"></div>
+  <span class="filter-label">Within:</span>
+  <button class="filter-btn active-all" id="fw-all" onclick="setWindow('all')">All dates</button>
+  <button class="filter-btn" id="fw-7" onclick="setWindow(7)">7 days</button>
+  <button class="filter-btn" id="fw-21" onclick="setWindow(21)">21 days</button>
+</div>
+
+<div id="error-bar" class="error-bar"></div>
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loader"></div>
+  <div class="loading-text">Pulling from Airtable…</div>
+</div>
+<div id="content" class="content" style="display:none;"></div>
+
+</div><!-- /app -->
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────
+const CONFIG = {
+  token: 'patqaHXZfbCy4yVOi.075ec8938a3c2d0065505f7b75571fbdc9c1781a329e6a65ddbc920766a86c7d',
+  baseId: 'appX3LNIvzae1gxdb',
+  tables: {
+    dtb: 'tblv6kGPHMzgm02mW',
+    checklists: 'tblKgdivZZYGzxxCi',
+    mcb: 'tblDWLEFD57AfjpTh',
+    masterCrew: 'tblDb2SvfDSoncx0d',
+  },
+  // DTB field IDs
+  dtb: {
+    rangeLabel:      'fldxwQhd57VA9IKtU',
+    rangeStatus:     'fldD7KYWhCi5CbpXM',
+    billingStatus:   'fldztoI0C84fNqGRg',
+    payroll:         'fldz3yBVkXYUyS282',
+    lcEntity:        'fldJzoKTRhH4YZ8Nt',
+    quoteNum:        'fldJs90EcFTY99ABl',
+    poNum:           'fldAnZgK5Wxopzj2C',
+    rangeNotes:      'fldMbppHBuIGfKrRz',
+    locationNotes:   'fldP82YKazFbPdFHk',
+    equipNotes:      'fldJJUZp5jqWQEEqL',
+    primaryUAS:      'flde4jq9vN1H6yhep',
+    camera:          'fldEV5ZmYx8HpIWIs',
+    provision:       'fld1WPyLIcLCvVFDD',
+    shootStart:      'fldj67ev48d0G3eko',
+    shootEnd:        'fldfhMcJq6F67HCt7',
+    travelOutStart:  'fld4fRRotIaNbuFfn',
+    travelOutEnd:    'fldEJIJ7e912CM8AV',
+    travelRetStart:  'flddLsG7c2MAV4W9Q',
+    travelRetEnd:    'fld5adaRrSBx62w8S',
+    checklistLink:   'fldGSlvGBulBazY6g',
+    mcbLink:         'fldJsyguvG9EaUXts',
+  },
+  // Checklist field IDs
+  cl: {
+    slackThread:     'fldwamsiIZCpc3C9e',  // checkbox
+    contract:        'fldSm5qu2yBA05sxH',
+    crewBoard:       'fld8ULY9s0iPT8pSr',
+    crewToProd:      'fldzDT9ZkvHydjLXv',
+    prodCOIs:        'fldnIZWDlZJZTVoUg',
+    agencyClientCOIs:'fldMfQcC2Q9zBOo1x',
+    rmQuestionnaire: 'fldWkaPLXQTnhrCyy',
+    locationsEntries:'fldHODMfRtQQBW9Kc',
+    poaPermitDocs:   'fldJu9Li4iOSmpQbX',
+    locationCOIs:    'fld9rTJhjABqPL1Ao',
+    coa:             'fld1y3KuT08yvp4ZW',
+    dtbLink:         'fld3qCjX8KzKDAokd',
+  },
+  // Checklist display names (in order)
+  clLabels: [
+    { key: 'slackThread',      label: 'Slack Thread',      isCheckbox: true },
+    { key: 'contract',         label: 'Contract',          isCheckbox: false },
+    { key: 'crewBoard',        label: 'Crew Board',        isCheckbox: false },
+    { key: 'crewToProd',       label: 'Crew to Prod',      isCheckbox: false },
+    { key: 'prodCOIs',         label: 'Prod COIs',         isCheckbox: false },
+    { key: 'agencyClientCOIs', label: 'Agency/Client COIs',isCheckbox: false },
+    { key: 'rmQuestionnaire',  label: 'RM Questionnaire',  isCheckbox: false },
+    { key: 'locationsEntries', label: 'Locations Entries', isCheckbox: false },
+    { key: 'poaPermitDocs',    label: 'POA/Permit Docs',   isCheckbox: false },
+    { key: 'locationCOIs',     label: 'Location COIs',     isCheckbox: false },
+    { key: 'coa',              label: 'COA',               isCheckbox: false },
+  ],
+  // MCB field IDs
+  mcb: {
+    assignmentLabel: 'fldvJ1Ijh2O9AYckO',
+    crewPosition:    'flde7IC6TI8OqoTkP',
+    crewStatus:      'fldnYlX0LNXGxf0NJ',
+    shootRate:       'fld3xMJu9SeqsFBYB',
+    crewMember:      'fldo5VmZ7QxxPWOwl',
+    shootRange:      'fldvSQUC1I03seviu',
+  },
+  // Master Crew field IDs
+  crew: {
+    familiarName: 'fldQVyVVzkF4JL0o0',
+    email:        'fldOFpC7jHITLYhv9',
+    cellPhone:    'fldpQpk2ApMkJXP4d',
+  },
+  password: '2354',
+  refreshInterval: 5 * 60 * 1000,
+};
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let allRanges = [];
+let activeFilter = 'all';
+let activeEntity = 'all';
+let activeWindow = 'all';
+let refreshTimer = null;
+let countdownTimer = null;
+let nextRefreshAt = null;
+
+// ─────────────────────────────────────────────────────────────
+// PASSWORD
+// ─────────────────────────────────────────────────────────────
+function checkPw() {
+  const val = document.getElementById('gate-input').value.trim();
+  if (val === CONFIG.password) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadData();
+  } else {
+    document.getElementById('gate-error').textContent = 'incorrect code';
+    document.getElementById('gate-input').value = '';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// AIRTABLE API
+// ─────────────────────────────────────────────────────────────
+async function airtableFetch(tableId, params = {}) {
+  const url = new URL(`https://api.airtable.com/v0/${CONFIG.baseId}/${tableId}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (Array.isArray(v)) v.forEach(item => url.searchParams.append(k, item));
+    else url.searchParams.set(k, v);
+  });
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${CONFIG.token}` }
+  });
+  if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+async function fetchAllPages(tableId, params = {}) {
+  let records = [];
+  let offset = null;
+  do {
+    const p = { ...params, pageSize: 100 };
+    if (offset) p.offset = offset;
+    const data = await airtableFetch(tableId, p);
+    records = records.concat(data.records || []);
+    offset = data.offset || null;
+  } while (offset);
+  return records;
+}
+
+// ─────────────────────────────────────────────────────────────
+// LOAD DATA
+// ─────────────────────────────────────────────────────────────
+async function loadData() {
+  clearTimers();
+  setLoading(true);
+  setError('');
+
+  try {
+    // Fetch active DTB records
+    const activeStatuses = ['Confirmed', 'Inquiry', 'Limbo', 'Billing', 'Aether'];
+    const filterFormula = `OR(${activeStatuses.map(s => `{Range Status}='${s}'`).join(',')})`;
+
+    const dtbRecords = await fetchAllPages(CONFIG.tables.dtb, {
+      filterByFormula: filterFormula,
+      fields: Object.values(CONFIG.dtb),
+    });
+
+    // Fetch all checklist records
+    const checklistRecords = await fetchAllPages(CONFIG.tables.checklists, {
+      fields: [...Object.values(CONFIG.cl)],
+    });
+
+    // Build checklist map: dtb record ID -> checklist fields
+    const clMap = {};
+    for (const cl of checklistRecords) {
+      const dtbLinks = cl.fields[CONFIG.cl.dtbLink];
+      if (dtbLinks && dtbLinks.length) {
+        clMap[dtbLinks[0]] = cl.fields;
+      }
+    }
+
+    // Fetch MCB records
+    const mcbRecords = await fetchAllPages(CONFIG.tables.mcb, {
+      fields: Object.values(CONFIG.mcb),
+    });
+
+    // Collect all crew member record IDs
+    const crewIds = new Set();
+    for (const m of mcbRecords) {
+      const links = m.fields[CONFIG.mcb.crewMember];
+      if (links && links.length) crewIds.add(links[0]);
+    }
+
+    // Fetch crew details
+    const crewMap = {};
+    if (crewIds.size > 0) {
+      // Fetch in batches of 10 using OR formula
+      const idArray = [...crewIds];
+      for (let i = 0; i < idArray.length; i += 10) {
+        const batch = idArray.slice(i, i + 10);
+        const formula = `OR(${batch.map(id => `RECORD_ID()='${id}'`).join(',')})`;
+        const crewData = await fetchAllPages(CONFIG.tables.masterCrew, {
+          filterByFormula: formula,
+          fields: Object.values(CONFIG.crew),
+        });
+        for (const c of crewData) crewMap[c.id] = c.fields;
+      }
+    }
+
+    // Build MCB map: dtb record ID -> array of assignments
+    const mcbMap = {};
+    for (const m of mcbRecords) {
+      const links = m.fields[CONFIG.mcb.shootRange];
+      if (!links || !links.length) continue;
+      const dtbId = links[0];
+      if (!mcbMap[dtbId]) mcbMap[dtbId] = [];
+      const crewMemberIds = m.fields[CONFIG.mcb.crewMember] || [];
+      const crewInfo = crewMemberIds.length ? crewMap[crewMemberIds[0]] : null;
+      mcbMap[dtbId].push({
+        position: m.fields[CONFIG.mcb.crewPosition]?.name || m.fields[CONFIG.mcb.crewPosition] || '',
+        status: m.fields[CONFIG.mcb.crewStatus]?.name || m.fields[CONFIG.mcb.crewStatus] || '',
+        rate: m.fields[CONFIG.mcb.shootRate] || null,
+        crewName: crewInfo ? crewInfo[CONFIG.crew.familiarName] : '',
+        crewEmail: crewInfo ? crewInfo[CONFIG.crew.email] : '',
+        crewPhone: crewInfo ? crewInfo[CONFIG.crew.cellPhone] : '',
+      });
+    }
+
+    // Process DTB records
+    allRanges = dtbRecords.map(r => {
+      const f = r.fields;
+      const status = f[CONFIG.dtb.rangeStatus]?.name || f[CONFIG.dtb.rangeStatus] || '';
+      const statusClass = classifyStatus(status);
+      const shootStart = f[CONFIG.dtb.shootStart] || null;
+      const travelOutStart = f[CONFIG.dtb.travelOutStart] || null;
+      const firstDate = travelOutStart || shootStart;
+      const days = firstDate ? daysDiff(firstDate) : null;
+      const clFields = clMap[r.id] || null;
+
+      // Parse payroll — lookup returns array
+      const payrollRaw = f[CONFIG.dtb.payroll];
+      const payroll = Array.isArray(payrollRaw) ? payrollRaw[0] : (payrollRaw || '');
+
+      // Parse entity — lookup returns array
+      const entityRaw = f[CONFIG.dtb.lcEntity];
+      const entity = Array.isArray(entityRaw) ? entityRaw[0] : (entityRaw || '');
+
+      return {
+        id: r.id,
+        label: f[CONFIG.dtb.rangeLabel] || '(no label)',
+        status,
+        statusClass,
+        billingStatus: f[CONFIG.dtb.billingStatus]?.name || f[CONFIG.dtb.billingStatus] || '',
+        payroll,
+        entity,
+        quoteNum: f[CONFIG.dtb.quoteNum] || '',
+        poNum: f[CONFIG.dtb.poNum] || '',
+        rangeNotes: stripRichText(f[CONFIG.dtb.rangeNotes]),
+        locationNotes: stripRichText(f[CONFIG.dtb.locationNotes]),
+        equipNotes: stripRichText(f[CONFIG.dtb.equipNotes]),
+        primaryUAS: f[CONFIG.dtb.primaryUAS]?.name || f[CONFIG.dtb.primaryUAS] || '',
+        camera: f[CONFIG.dtb.camera]?.name || f[CONFIG.dtb.camera] || '',
+        provision: f[CONFIG.dtb.provision]?.name || f[CONFIG.dtb.provision] || '',
+        shootStart,
+        shootEnd: f[CONFIG.dtb.shootEnd] || null,
+        travelOutStart,
+        travelOutEnd: f[CONFIG.dtb.travelOutEnd] || null,
+        travelRetStart: f[CONFIG.dtb.travelRetStart] || null,
+        travelRetEnd: f[CONFIG.dtb.travelRetEnd] || null,
+        days,
+        checklist: clFields,
+        crew: mcbMap[r.id] || [],
+      };
+    });
+
+    // Sort: by days ascending (TBD at end), then within same-day by label
+    allRanges.sort((a, b) => {
+      if (a.days === null && b.days === null) return a.label.localeCompare(b.label);
+      if (a.days === null) return 1;
+      if (b.days === null) return -1;
+      return a.days - b.days;
+    });
+
+    renderAll();
+    updateStats();
+
+    document.getElementById('last-updated').textContent = 'Updated ' + fmtTime(new Date());
+    scheduleRefresh();
+
+  } catch (err) {
+    setError('Error loading data: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function classifyStatus(s) {
+  const l = (s || '').toLowerCase();
+  if (l.includes('confirmed') || l === 'aether') return 'confirmed';
+  if (l === 'inquiry') return 'inquiry';
+  if (l === 'limbo') return 'limbo';
+  if (l === 'billing') return 'billing';
+  return 'unknown';
+}
+
+function daysDiff(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+
+function fmtDate(d) {
+  if (!d) return null;
+  const dt = new Date(d);
+  return `${dt.getMonth()+1}/${dt.getDate()}`;
+}
+
+function fmtTime(d) {
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function stripRichText(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  // Airtable richText is a string
+  return String(val);
+}
+
+function daysBadge(days) {
+  if (days === null) return `<span class="db-tbd">TBD</span>`;
+  if (days === 0) return `<span class="days-badge db-today">TODAY</span>`;
+  if (days < 0) return `<span class="days-badge db-past">${Math.abs(days)}d ago</span>`;
+  if (days <= 3) return `<span class="days-badge db-hot">${days}d</span>`;
+  if (days <= 10) return `<span class="days-badge db-warn">${days}d</span>`;
+  return `<span class="days-badge db-ok">${days}d</span>`;
+}
+
+function buildDateStr(r) {
+  const parts = [];
+  if (r.travelOutStart) {
+    const s = fmtDate(r.travelOutStart), e = fmtDate(r.travelOutEnd);
+    parts.push('Out: ' + s + (e && e !== s ? '–'+e : ''));
+  }
+  if (r.shootStart) {
+    const s = fmtDate(r.shootStart), e = fmtDate(r.shootEnd);
+    parts.push('Shoot: ' + s + (e && e !== s ? '–'+e : ''));
+  }
+  if (r.travelRetStart) {
+    const s = fmtDate(r.travelRetStart), e = fmtDate(r.travelRetEnd);
+    parts.push('Ret: ' + s + (e && e !== s ? '–'+e : ''));
+  }
+  return parts.join('  ·  ');
+}
+
+// ─────────────────────────────────────────────────────────────
+// CHECKLIST LOGIC
+// ─────────────────────────────────────────────────────────────
+function clState(value, isCheckbox) {
+  if (isCheckbox) {
+    return value ? 'done' : 'open';
+  }
+  if (!value) return 'open';
+  const v = typeof value === 'object' ? (value.name || '') : String(value);
+  if (!v || v.trim() === '') return 'open';
+  const lower = v.toLowerCase();
+  if (lower === 'working on it' || lower === 'on order') return 'partial';
+  return 'done';
+}
+
+function clDisplay(value, isCheckbox) {
+  if (isCheckbox) return '';
+  if (!value) return '';
+  const v = typeof value === 'object' ? (value.name || '') : String(value);
+  if (!v || v.toLowerCase() === 'done') return '';
+  return `[${v}]`;
+}
+
+function renderChecklist(clFields, compact = false) {
+  if (!clFields) return '<span class="no-staffing">No checklist</span>';
+
+  const items = CONFIG.clLabels.map(item => {
+    const rawVal = clFields[CONFIG.cl[item.key]];
+    const state = clState(rawVal, item.isCheckbox);
+    const display = clDisplay(rawVal, item.isCheckbox);
+    return { label: item.label, state, display };
+  });
+
+  const openItems = items.filter(i => i.state === 'open');
+  const partialItems = items.filter(i => i.state === 'partial');
+
+  if (compact) {
+    if (openItems.length === 0 && partialItems.length === 0) {
+      return '<span class="checklist-all-clear">✓ All clear</span>';
+    }
+    let html = '';
+    openItems.slice(0, 4).forEach(i => {
+      html += `<div class="check-row"><div class="check-dot cd-open"></div><span class="check-name-open">${i.label}</span></div>`;
+    });
+    partialItems.slice(0, 2).forEach(i => {
+      html += `<div class="check-row"><div class="check-dot cd-partial"></div><span class="check-name-partial">${i.label} ${i.display}</span></div>`;
+    });
+    const remaining = openItems.length + partialItems.length - 6;
+    if (remaining > 0) html += `<div class="check-row" style="color:var(--text-dim);font-size:0.58rem;">+${remaining} more open</div>`;
+    return html;
+  }
+
+  // Full checklist
+  return items.map(i => {
+    const dotClass = i.state === 'done' ? 'cd-done' : i.state === 'partial' ? 'cd-partial' : 'cd-open';
+    const nameClass = i.state === 'done' ? 'check-name-done' : i.state === 'partial' ? 'check-name-partial' : 'check-name-open';
+    return `<div class="check-row"><div class="check-dot ${dotClass}"></div><span class="${nameClass}">${i.label}${i.display ? ' '+i.display : ''}</span></div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+// STAFFING LOGIC
+// ─────────────────────────────────────────────────────────────
+function renderStaffingCompact(crew) {
+  if (!crew || !crew.length) return '<span class="no-staffing">No positions</span>';
+  return crew.slice(0, 4).map(c => {
+    const isLead = (c.status || '').toLowerCase() === 'team lead';
+    const isOpen = !c.status || c.status === '' || (!c.crewName && !isLead);
+    const tagClass = isOpen ? 'st-open' : isLead ? 'st-lead' : 'st-confirmed';
+    const tagText = isOpen ? 'Open' : isLead ? 'Lead' : '✓';
+    return `<div class="staff-row">
+      <span class="staff-pos">${c.position || '—'}</span>
+      <span class="staff-tag ${tagClass}">${tagText}</span>
+    </div>`;
+  }).join('') + (crew.length > 4 ? `<div style="font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">+${crew.length-4} more</div>` : '');
+}
+
+function renderStaffingFull(crew) {
+  if (!crew || !crew.length) return '<span class="no-staffing">No positions assigned</span>';
+  return crew.map(c => {
+    const isLead = (c.status || '').toLowerCase() === 'team lead';
+    const isOpen = !c.crewName && !isLead;
+    const tagClass = isOpen ? 'st-open' : isLead ? 'st-lead' : 'st-confirmed';
+    const tagText = isOpen ? 'Open' : isLead ? 'Team Lead' : '✓';
+    const rateStr = c.rate ? ` · $${c.rate.toLocaleString()}` : '';
+    const crewLine = c.crewName ? `<div class="crew-detail">${c.crewName}${rateStr}${isLead ? ' — Team Lead' : ''}</div>` : '';
+    const contactLine = (c.crewEmail || c.crewPhone) ?
+      `<div class="crew-detail">${[c.crewEmail, c.crewPhone].filter(Boolean).join(' · ')}</div>` : '';
+    return `<div style="margin-bottom:0.6rem;">
+      <div class="staff-row">
+        <span class="staff-pos">${c.position || '—'}</span>
+        <span class="staff-tag ${tagClass}">${tagText}</span>
+      </div>
+      ${crewLine}${contactLine}
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────
+function filteredRanges() {
+  let list = [...allRanges];
+  if (activeFilter !== 'all') list = list.filter(r => r.statusClass === activeFilter);
+  if (activeEntity !== 'all') list = list.filter(r => r.entity === activeEntity);
+  if (activeWindow !== 'all') {
+    const days = Number(activeWindow);
+    list = list.filter(r => r.days !== null && r.days <= days && r.days >= -3);
+  }
+  return list;
+}
+
+function renderAll() {
+  const content = document.getElementById('content');
+  const ranges = filteredRanges();
+
+  if (!ranges.length) {
+    content.innerHTML = '<div class="empty-state">No ranges match the current filters.</div>';
+    return;
+  }
+
+  const groups = { confirmed: [], inquiry: [], limbo: [], billing: [], unknown: [] };
+  for (const r of ranges) groups[r.statusClass].push(r);
+
+  const order = ['confirmed', 'inquiry', 'limbo', 'billing', 'unknown'];
+  const labels = { confirmed: 'Confirmed', inquiry: 'Inquiry', limbo: 'Limbo', billing: 'Billing', unknown: 'Other' };
+  const labelClass = { confirmed: 'sl-confirmed', inquiry: 'sl-inquiry', limbo: 'sl-limbo', billing: 'sl-billing', unknown: '' };
+
+  let html = '';
+  for (const group of order) {
+    const items = groups[group];
+    if (!items.length) continue;
+
+    html += `<div class="section-header">
+      <span class="section-label ${labelClass[group]}">${labels[group]}</span>
+      <span class="section-count">(${items.length})</span>
+      <div class="section-line"></div>
+    </div>`;
+
+    html += `<div class="table-wrap"><table class="range-table">
+      <thead><tr>
+        <th>Range</th>
+        <th>Days</th>
+        <th>Checklist</th>
+        <th>Staffing</th>
+        <th>Quote / Billing</th>
+        <th>▾</th>
+      </tr></thead><tbody>`;
+
+    for (const r of items) {
+      const dateStr = buildDateStr(r);
+      const metaParts = [];
+      if (r.payroll) metaParts.push('PAY: ' + r.payroll);
+      if (r.locationNotes) metaParts.push('LOC: ' + r.locationNotes.substring(0, 60));
+
+      const quoteLine = r.quoteNum || r.poNum ? (r.quoteNum || '') + (r.poNum ? ' / ' + r.poNum : '') : '—';
+      const bStatus = r.billingStatus;
+      const bClass = !bStatus ? 'bp-none' : bStatus.toLowerCase().includes('sent') || bStatus.toLowerCase().includes('issued') ? 'bp-issued' : 'bp-pending';
+
+      html += `<tr class="row-clickable stripe-${r.statusClass}" onclick="toggleExpand('${r.id}')">
+        <td>
+          <div class="range-name">${esc(r.label)}</div>
+          ${dateStr ? `<div class="range-dates">${esc(dateStr)}</div>` : ''}
+          ${metaParts.length ? `<div class="range-meta-inline">${esc(metaParts.join('  ·  '))}</div>` : ''}
+        </td>
+        <td>${daysBadge(r.days)}</td>
+        <td>${renderChecklist(r.checklist, true)}</td>
+        <td>${renderStaffingCompact(r.crew)}</td>
+        <td>
+          <div class="quote-ver">${esc(quoteLine)}</div>
+          ${bStatus ? `<div class="billing-pill ${bClass}">${esc(bStatus)}</div>` : ''}
+        </td>
+        <td><span class="chevron" id="chev-${r.id}">▾</span></td>
+      </tr>
+      <tr class="expand-row" id="exp-${r.id}">
+        <td colspan="6">
+          <div class="expand-inner">
+            <div>
+              <div class="expand-section-label">Equipment</div>
+              <div>
+                ${r.primaryUAS ? `<span class="equip-pill">${esc(r.primaryUAS)}</span>` : ''}
+                ${r.camera ? `<span class="equip-pill">${esc(r.camera)}</span>` : ''}
+                ${r.provision ? `<span class="equip-pill">${esc(r.provision)}</span>` : ''}
+              </div>
+              ${r.equipNotes ? `<div class="expand-notes" style="margin-top:0.4rem">${esc(r.equipNotes.substring(0,300))}</div>` : ''}
+            </div>
+            <div>
+              <div class="expand-section-label">Full Checklist</div>
+              ${renderChecklist(r.checklist, false)}
+            </div>
+            <div>
+              <div class="expand-section-label">Full Staffing</div>
+              ${renderStaffingFull(r.crew)}
+            </div>
+            ${r.rangeNotes ? `<div>
+              <div class="expand-section-label">Range Notes</div>
+              <div class="expand-notes">${esc(r.rangeNotes.substring(0,500))}</div>
+            </div>` : ''}
+          </div>
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table></div>';
+  }
+
+  content.innerHTML = html;
+}
+
+function toggleExpand(id) {
+  const row = document.getElementById('exp-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if (!row) return;
+  const isOpen = row.style.display === 'table-row';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+
+// ─────────────────────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────────────────────
+function updateStats() {
+  const ranges = filteredRanges();
+  const confirmed = ranges.filter(r => r.statusClass === 'confirmed').length;
+  const inquiry = ranges.filter(r => r.statusClass === 'inquiry').length;
+
+  // Open checklist items — confirmed only
+  let openCL = 0;
+  for (const r of ranges.filter(r => r.statusClass === 'confirmed')) {
+    if (!r.checklist) continue;
+    for (const item of CONFIG.clLabels) {
+      const rawVal = r.checklist[CONFIG.cl[item.key]];
+      if (clState(rawVal, item.isCheckbox) === 'open') openCL++;
+    }
+  }
+
+  // Unstaffed — blank crew status across all confirmed
+  let unstaffed = 0;
+  for (const r of ranges.filter(r => r.statusClass === 'confirmed')) {
+    unstaffed += r.crew.filter(c => !c.crewName && (c.status || '').toLowerCase() !== 'team lead').length;
+  }
+
+  document.getElementById('stat-confirmed').textContent = confirmed;
+  document.getElementById('stat-inquiry').textContent = inquiry;
+  document.getElementById('stat-open').textContent = openCL;
+  document.getElementById('stat-unstaffed').textContent = unstaffed;
+  document.getElementById('stat-total').textContent = ranges.length;
+}
+
+// ─────────────────────────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────────────────────────
+function setFilter(f) {
+  activeFilter = f;
+  ['all','confirmed','inquiry','limbo','billing'].forEach(x => {
+    const btn = document.getElementById('fb-' + x);
+    if (!btn) return;
+    btn.className = 'filter-btn' + (x === f ? ' active-' + (f === 'all' ? 'all' : f) : '');
+  });
+  renderAll(); updateStats();
+}
+
+function setEntity(e) {
+  activeEntity = e;
+  ['all','la','le','uk'].forEach(x => {
+    const btn = document.getElementById('fe-' + x);
+    if (!btn) return;
+    btn.className = 'filter-btn' + (
+      (x === 'all' && e === 'all') ||
+      (x === 'la' && e === 'Los Angeles') ||
+      (x === 'le' && e === 'LC East') ||
+      (x === 'uk' && e === 'LC UK')
+        ? ' active-entity' : '');
+  });
+  renderAll(); updateStats();
+}
+
+function setWindow(w) {
+  activeWindow = w;
+  ['all','7','21'].forEach(x => {
+    const btn = document.getElementById('fw-' + x);
+    if (!btn) return;
+    btn.className = 'filter-btn' + (String(x) === String(w) ? ' active-all' : '');
+  });
+  renderAll(); updateStats();
+}
+
+// ─────────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('loading-overlay').style.display = on ? 'flex' : 'none';
+  document.getElementById('content').style.display = on ? 'none' : 'block';
+  document.getElementById('btn-refresh').disabled = on;
+}
+
+function setError(msg) {
+  const bar = document.getElementById('error-bar');
+  bar.style.display = msg ? 'block' : 'none';
+  bar.textContent = msg;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUTO REFRESH
+// ─────────────────────────────────────────────────────────────
+function scheduleRefresh() {
+  clearTimers();
+  nextRefreshAt = Date.now() + CONFIG.refreshInterval;
+  refreshTimer = setTimeout(loadData, CONFIG.refreshInterval);
+  countdownTimer = setInterval(() => {
+    const remaining = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));
+    const m = Math.floor(remaining / 60), s = remaining % 60;
+    document.getElementById('next-refresh').textContent = `Refresh in ${m}:${String(s).padStart(2,'0')}`;
+  }, 1000);
+}
+
+function clearTimers() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  if (countdownTimer) clearInterval(countdownTimer);
+}
+</script>
+</body>
+</html>
