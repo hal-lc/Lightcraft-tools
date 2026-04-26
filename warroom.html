@@ -370,14 +370,26 @@ function checkPw() {
 async function airtableFetch(tableId, params = {}) {
   const url = new URL(`https://api.airtable.com/v0/${CONFIG.baseId}/${tableId}`);
   Object.entries(params).forEach(([k, v]) => {
-    if (Array.isArray(v)) v.forEach(item => url.searchParams.append(k, item));
-    else url.searchParams.set(k, v);
+    if (k === 'fields') {
+      // Airtable requires fields[]=fldXXX repeated
+      (Array.isArray(v) ? v : [v]).forEach(item => url.searchParams.append('fields[]', item));
+    } else if (Array.isArray(v)) {
+      v.forEach(item => url.searchParams.append(k, item));
+    } else {
+      url.searchParams.set(k, v);
+    }
   });
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${CONFIG.token}` }
   });
-  if (!res.ok) throw new Error(`Airtable ${res.status}: ${await res.text()}`);
-  return res.json();
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error('Airtable error', res.status, txt);
+    throw new Error(`Airtable ${res.status}: ${txt}`);
+  }
+  const data = await res.json();
+  console.log(`Fetched ${data.records?.length ?? 0} records from ${tableId}`);
+  return data;
 }
 
 async function fetchAllPages(tableId, params = {}) {
